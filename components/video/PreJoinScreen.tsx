@@ -40,12 +40,34 @@ export default function PreJoinScreen({ onJoin }: PreJoinScreenProps) {
     }
   }, [videoTrack]);
 
-  const toggleVideo = () => {
-    if (videoTrack) {
-      videoTrack.isEnabled ? videoTrack.disable() : videoTrack.enable();
-      setVideoEnabled(!videoEnabled);
+  const toggleAudio = async () => {
+    if (audioTrack) {
+      if (audioTrack.isMuted) {
+        await audioTrack.unmute();
+        setAudioEnabled(true);
+      } else {
+        await audioTrack.mute();
+        setAudioEnabled(false);
+      }
     }
   };
+
+  const toggleVideo = async () => {
+    if (videoTrack) {
+      // In LiveKit v2:
+      // - isEnabled is replaced by !isMuted
+      // - disable() is replaced by mute()
+      // - enable() is replaced by unmute()
+      if (videoTrack.isMuted) {
+        await videoTrack.unmute();
+        setVideoEnabled(true);
+      } else {
+        await videoTrack.mute();
+        setVideoEnabled(false);
+      }
+    }
+  };
+
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white">
@@ -62,6 +84,9 @@ export default function PreJoinScreen({ onJoin }: PreJoinScreenProps) {
         </div>
 
         <div className="flex justify-center gap-4 mb-8">
+          <button onClick={toggleAudio} className={`p-4 rounded-full ${audioEnabled ? 'bg-gray-700' : 'bg-red-500'}`}>
+            {audioEnabled ? <Mic /> : <MicOff />}
+          </button>
           <button onClick={toggleVideo} className={`p-4 rounded-full ${videoEnabled ? 'bg-gray-700' : 'bg-red-500'}`}>
             {videoEnabled ? <Video /> : <VideoOff />}
           </button>
