@@ -1,4 +1,4 @@
-﻿import { createClient } from '@/lib/supabase/server';
+﻿﻿import { createClient } from '@/lib/supabase/server';
 import { submitPrescription } from '@/app/actions/prescriptions';
 import { redirect } from 'next/navigation';
 import { FileText, Save } from 'lucide-react';
@@ -18,8 +18,8 @@ export default async function PrescriptionPage({ params }: { params: { id: strin
   if (!appointment) return <div>Appointment not found</div>;
 
   return (
-    <div className="max-w-3xl mx-auto p-8 bg-gray-50 min-h-screen">
-      <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-200">
+    <div className="max-w-3xl mx-auto p-4 md:p-8 bg-gray-50 min-h-screen pb-24 md:pb-8">
+      <div className="bg-white p-6 md:p-8 rounded-xl shadow-sm border border-gray-200">
         <div className="flex items-center gap-3 mb-6 border-b pb-4">
           <div className="p-2 bg-blue-100 text-blue-600 rounded-lg">
             <FileText size={24} />

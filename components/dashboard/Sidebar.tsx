@@ -26,7 +26,7 @@ export default async function Sidebar() {
   ];
 
   return (
-    <div className="flex flex-col w-64 bg-white border-r border-gray-200 min-h-screen sticky top-0 h-screen max-md:fixed max-md:bottom-0 max-md:w-full max-md:h-auto max-md:min-h-0 max-md:flex-row max-md:border-r-0 max-md:border-t max-md:z-50">
+    <div className="flex flex-col w-64 bg-white border-r border-gray-200 min-h-screen sticky top-0 h-screen max-md:fixed max-md:top-auto max-md:bottom-0 max-md:w-full max-md:h-auto max-md:min-h-0 max-md:flex-row max-md:border-r-0 max-md:border-t max-md:z-50">
       <div className="p-6 border-b border-gray-100 max-md:hidden">
         <h2 className="text-xl font-bold text-blue-600 flex items-center gap-2">
           Health Connect
