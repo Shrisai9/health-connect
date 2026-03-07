@@ -15,10 +15,13 @@ export default function PreJoinScreen({ onJoin }: PreJoinScreenProps) {
   const [audioEnabled, setAudioEnabled] = useState(true);
 
   useEffect(() => {
+    let vTrack: LocalVideoTrack | null = null;
+    let aTrack: LocalAudioTrack | null = null;
+
     const initTracks = async () => {
       try {
-        const vTrack = await createLocalVideoTrack();
-        const aTrack = await createLocalAudioTrack();
+        vTrack = await createLocalVideoTrack();
+        aTrack = await createLocalAudioTrack();
         setVideoTrack(vTrack);
         setAudioTrack(aTrack);
       } catch (e) {
@@ -28,8 +31,8 @@ export default function PreJoinScreen({ onJoin }: PreJoinScreenProps) {
     initTracks();
 
     return () => {
-      videoTrack?.stop();
-      audioTrack?.stop();
+      vTrack?.stop();
+      aTrack?.stop();
     };
   }, []);
 
