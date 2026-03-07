@@ -1,4 +1,4 @@
-﻿import Link from 'next/link';
+﻿﻿import Link from 'next/link';
 import { Home, Calendar, FileText, LogOut, User, PlusCircle } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 
@@ -26,8 +26,8 @@ export default async function Sidebar() {
   ];
 
   return (
-    <div className="w-64 bg-white border-r border-gray-200 min-h-screen flex flex-col sticky top-0 h-screen">
-      <div className="p-6 border-b border-gray-100">
+    <div className="flex flex-col w-64 bg-white border-r border-gray-200 min-h-screen sticky top-0 h-screen max-md:fixed max-md:bottom-0 max-md:w-full max-md:h-auto max-md:min-h-0 max-md:flex-row max-md:border-r-0 max-md:border-t max-md:z-50">
+      <div className="p-6 border-b border-gray-100 max-md:hidden">
         <h2 className="text-xl font-bold text-blue-600 flex items-center gap-2">
           Health Connect
         </h2>
@@ -36,20 +36,26 @@ export default async function Sidebar() {
         </span>
       </div>
       
-      <nav className="flex-1 p-4 space-y-2">
+      <nav className="flex-1 p-4 space-y-2 max-md:flex max-md:flex-row max-md:items-center max-md:justify-around max-md:p-2 max-md:space-y-0">
         {links.map((link) => (
           <Link 
             key={link.href} 
             href={link.href}
-            className="flex items-center gap-3 px-4 py-3 text-gray-600 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition font-medium"
+            className="flex items-center gap-3 px-4 py-3 text-gray-600 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition font-medium max-md:flex-col max-md:gap-1 max-md:px-2 max-md:py-1 max-md:text-xs"
           >
             <link.icon size={20} />
             <span>{link.label}</span>
           </Link>
         ))}
+        
+        <form action="/auth/signout" method="post" className="hidden max-md:block">
+            <button className="flex flex-col items-center gap-1 px-2 py-1 text-red-600 hover:bg-red-50 rounded-lg transition text-xs font-medium">
+                <LogOut size={20} /> <span>Sign Out</span>
+            </button>
+        </form>
       </nav>
 
-      <div className="p-4 border-t border-gray-100">
+      <div className="p-4 border-t border-gray-100 max-md:hidden">
         <div className="flex items-center gap-3 px-4 py-3 mb-2">
            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold">
               {profile?.full_name?.[0] || 'U'}

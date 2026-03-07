@@ -66,7 +66,7 @@ export default function BookingPage() {
   if (loading) return <div className="p-8">Loading doctors...</div>;
 
   return (
-    <div className="p-8 max-w-4xl mx-auto min-h-screen bg-gray-50">
+    <div className="p-4 md:p-8 max-w-4xl mx-auto min-h-screen bg-gray-50 pb-24 md:pb-8">
       <h1 className="text-3xl font-bold text-gray-900 mb-2">Book an Appointment</h1>
       <p className="text-gray-500 mb-8">Select a specialist and a time that works for you.</p>
 

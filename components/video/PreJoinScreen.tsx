@@ -74,7 +74,7 @@ export default function PreJoinScreen({ onJoin }: PreJoinScreenProps) {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white">
-      <div className="w-full max-w-2xl p-6">
+      <div className="w-full max-w-2xl p-4 md:p-6">
         <h2 className="text-2xl font-bold mb-6 text-center">Check your Audio & Video</h2>
         
         <div className="relative aspect-video bg-black rounded-xl overflow-hidden mb-6 border border-gray-700">
