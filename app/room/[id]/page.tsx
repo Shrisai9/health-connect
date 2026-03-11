@@ -1,59 +1,94 @@
 ﻿'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import PreJoinScreen from '@/components/video/PreJoinScreen';
-import VideoRoom from '@/components/video/VideoRoom';
+import { LiveKitRoom, VideoConference } from '@livekit/components-react';
+import '@livekit/components-styles';
+import { Loader2 } from 'lucide-react';
 
-export default function RoomPage() {
-  const params = useParams();
-  const id = params.id as string;
-  const router = useRouter();
+export default function RoomPage({ params }: { params: { id: string } }) {
   const [token, setToken] = useState('');
-  const [isPreJoinComplete, setIsPreJoinComplete] = useState(false);
-  const [user, setUser] = useState<any>(null);
+  const [role, setRole] = useState('patient');
+  const router = useRouter();
+  const roomID = params.id;
 
   useEffect(() => {
-    const init = async () => {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        router.push('/login');
-        return;
-      }
-      setUser(user);
-    };
-    init();
-  }, [router]);
+    (async () => {
+      try {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (!user) {
+            router.push('/login');
+            return;
+        }
 
-  const handleJoin = async () => {
-    if (!user) return;
+        // Fetch user's name and role to handle redirect correctly
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('full_name, role')
+          .eq('id', user.id)
+          .single();
+          
+        const name = profile?.full_name || user.email || 'Guest';
+        if (profile?.role) setRole(profile.role);
 
-    try {
-      const res = await fetch(`/api/livekit?room=${id}&username=${user.email}`);
-      const data = await res.json();
-      if (data.token) {
+        // Fetch the secure token from our API
+        const resp = await fetch(`/api/livekit?room=${roomID}&username=${encodeURIComponent(name)}`);
+        const data = await resp.json();
+        
+        if (data.error) {
+          console.error(data.error);
+          alert('Failed to join: ' + data.error);
+          // If join fails, redirect based on role immediately
+          if (profile?.role === 'doctor') router.push('/doctor');
+          else if (profile?.role === 'admin') router.push('/admin/appointments');
+          else router.push('/patient');
+          return;
+        }
+        
         setToken(data.token);
-        setIsPreJoinComplete(true);
-      } else {
-        alert('Failed to join room: ' + data.error);
+      } catch (e) {
+        console.error(e);
       }
-    } catch (e) {
-      console.error(e);
-      alert('Error connecting to server');
+    })();
+  }, [roomID, router]);
+
+  const handleDisconnect = () => {
+    // Redirect to the correct dashboard based on role
+    if (role === 'doctor') {
+      router.push('/doctor');
+    } else if (role === 'admin') {
+      router.push('/admin/appointments');
+    } else {
+      router.push('/patient');
     }
+    router.refresh();
   };
 
-  if (!isPreJoinComplete) {
-    return <PreJoinScreen onJoin={handleJoin} />;
+  if (!token) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <Loader2 className="h-10 w-10 animate-spin text-blue-600 mx-auto mb-4" />
+          <p className="text-gray-500 font-medium">Connecting to secure room...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <VideoRoom 
-      roomName={id} 
-      token={token} 
-      onDisconnected={() => router.push('/')} 
-    />
+    <LiveKitRoom
+      video={true}
+      audio={true}
+      token={token}
+      serverUrl={process.env.NEXT_PUBLIC_LIVEKIT_URL}
+      data-lk-theme="default"
+      style={{ height: '100vh' }}
+      onDisconnected={handleDisconnect}
+    >
+      <VideoConference />
+    </LiveKitRoom>
   );
 }
