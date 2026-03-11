@@ -1,5 +1,5 @@
 ﻿﻿import Link from 'next/link';
-import { Home, Calendar, FileText, LogOut, User, PlusCircle } from 'lucide-react';
+import { Home, Calendar, FileText, LogOut, User, Users, PlusCircle } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 
 export default async function Sidebar() {
@@ -16,14 +16,23 @@ export default async function Sidebar() {
 
   const role = profile?.role || 'patient';
 
-  const links = role === 'doctor' ? [
-    { href: '/doctor', label: 'Dashboard', icon: Home },
-    // Doctors usually manage schedule in dashboard, but could have separate page
-  ] : [
-    { href: '/patient', label: 'Dashboard', icon: Home },
-    { href: '/patient/book', label: 'Book Appointment', icon: PlusCircle },
-    { href: '/patient/prescriptions', label: 'Prescriptions', icon: FileText },
-  ];
+  let links = [];
+
+  if (role === 'admin') {
+    links = [
+      { href: '/admin', label: 'Dashboard', icon: Home },
+      { href: '/admin/users', label: 'Users', icon: Users },
+      { href: '/admin/appointments', label: 'Appointments', icon: Calendar },
+    ];
+  } else if (role === 'doctor') {
+    links = [{ href: '/doctor', label: 'Dashboard', icon: Home }];
+  } else {
+    links = [
+      { href: '/patient', label: 'Dashboard', icon: Home },
+      { href: '/patient/book', label: 'Book Appointment', icon: PlusCircle },
+      { href: '/patient/prescriptions', label: 'Prescriptions', icon: FileText },
+    ];
+  }
 
   return (
     <div className="flex flex-col w-64 bg-white border-r border-gray-200 min-h-screen sticky top-0 h-screen max-md:fixed max-md:top-auto max-md:bottom-0 max-md:w-full max-md:h-auto max-md:min-h-0 max-md:flex-row max-md:border-r-0 max-md:border-t max-md:z-50">

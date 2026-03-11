@@ -1,4 +1,4 @@
-﻿import { createServerClient, type CookieOptions } from '@supabase/ssr';
+﻿﻿import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
 export async function middleware(request: NextRequest) {
@@ -57,7 +57,7 @@ export async function middleware(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
 
   // Protect Dashboard Routes
-  if (request.nextUrl.pathname.startsWith('/doctor') || request.nextUrl.pathname.startsWith('/patient')) {
+  if (request.nextUrl.pathname.startsWith('/doctor') || request.nextUrl.pathname.startsWith('/patient') || request.nextUrl.pathname.startsWith('/admin')) {
     if (!user) {
       return NextResponse.redirect(new URL('/login', request.url));
     }
