@@ -24,8 +24,9 @@ export default function BookingPage() {
           id,
           specialization,
           hourly_rate,
-          profiles (full_name)
-        `);
+          profiles!inner (full_name, role)
+        `)
+        .eq('profiles.role', 'doctor');
       
       if (error) console.error('Error fetching doctors:', error);
       if (data) setDoctors(data);
