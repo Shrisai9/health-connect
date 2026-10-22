@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "node --test tests/stqa-doctor-appointment.test.ts"
   },
   "dependencies": {
     "@livekit/components-react": "^2.0.0",

@@ -1,7 +1,8 @@
-﻿import { createClient } from '@/lib/supabase/server';
+import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { Calendar, Clock, Video, FileText } from 'lucide-react';
 import Link from 'next/link';
+import AppointmentCancelButton from '@/components/AppointmentCancelButton';
 
 export default async function PatientDashboard() {
   const supabase = createClient();
@@ -10,7 +11,6 @@ export default async function PatientDashboard() {
   if (!user) redirect('/login');
 
   // Fetch appointments and join with profiles to get the doctor's name.
-  // The RLS policies we will set in the next step make this query possible.
   const { data: appointments, error } = await supabase
     .from('appointments')
     .select(`
@@ -28,18 +28,31 @@ export default async function PatientDashboard() {
       )
     `)
     .eq('patient_id', user.id)
-    .order('start_time', { ascending: true });
+    .order('start_time', { ascending: false });
 
   if (error) {
     console.error('Server Error: Failed to fetch appointments.', error);
   }
+
+  const getStatusBadgeClass = (status: string) => {
+    switch (status) {
+      case 'scheduled':
+        return 'bg-green-100 text-green-700 border-green-200';
+      case 'cancelled':
+        return 'bg-red-100 text-red-700 border-red-200';
+      case 'completed':
+        return 'bg-blue-100 text-blue-700 border-blue-200';
+      default:
+        return 'bg-gray-100 text-gray-700 border-gray-200';
+    }
+  };
 
   return (
     <div className="p-4 md:p-8 max-w-6xl mx-auto pb-24 md:pb-8">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">My Appointments</h1>
-          <p className="text-gray-500 mt-1">Manage your upcoming visits</p>
+          <p className="text-gray-500 mt-1">Manage your upcoming visits and consultation history</p>
         </div>
         <Link 
           href="/patient/book" 
@@ -53,7 +66,7 @@ export default async function PatientDashboard() {
         {!appointments || appointments.length === 0 ? (
           <div className="p-12 text-center text-gray-500">
             <Calendar className="mx-auto h-12 w-12 text-gray-300 mb-3" />
-            <p className="text-lg font-medium">No upcoming appointments</p>
+            <p className="text-lg font-medium">No appointments yet</p>
             <p className="text-sm mt-1">
               Click "Book New" to schedule your first consultation.
             </p>
@@ -72,28 +85,31 @@ export default async function PatientDashboard() {
                       <h3 className="font-semibold text-gray-900 text-lg">
                         {apt.doctor?.profiles?.full_name || 'Unknown Doctor'}
                       </h3>
-                      <div className="flex items-center gap-4 text-sm text-gray-500 mt-1">
+                      <div className="flex items-center gap-4 text-sm text-gray-500 mt-1 flex-wrap">
                         <span className="flex items-center gap-1.5">
                           <Clock size={14} />
                           {date.toLocaleDateString()} at {date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </span>
-                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium capitalize
-                          ${apt.status === 'scheduled' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`
-                        }>
+                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold capitalize border ${getStatusBadgeClass(apt.status)}`}>
                           {apt.status}
                         </span>
                       </div>
                     </div>
                   </div>
 
-                  {apt.status === 'scheduled' && (
-                    <Link 
-                      href={`/room/${apt.id}`}
-                      className="flex items-center justify-center gap-2 px-4 py-2 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition font-medium"
-                    >
-                      <Video size={18} /> Join Call
-                    </Link>
-                  )}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {apt.status === 'scheduled' && (
+                      <>
+                        <Link 
+                          href={`/room/${apt.id}`}
+                          className="flex items-center justify-center gap-2 px-4 py-2 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition font-medium"
+                        >
+                          <Video size={18} /> Join Call
+                        </Link>
+                        <AppointmentCancelButton appointmentId={apt.id} />
+                      </>
+                    )}
+                  </div>
 
                   {apt.prescriptions && apt.prescriptions.length > 0 && (
                     <div className="mt-4 w-full p-4 bg-green-50 border border-green-100 rounded-lg">
