@@ -18,6 +18,7 @@ import {
   Activity,
   PhoneCall
 } from 'lucide-react';
+import { FEATURED_DOCTORS } from '@/lib/doctors';
 
 export default function LandingPage() {
   const specialties = [
@@ -29,56 +30,7 @@ export default function LandingPage() {
     { name: 'Psychiatry', icon: Brain, tag: 'Mental Health & Therapy', doctors: '5 Doctors' },
   ];
 
-  const featuredDoctors = [
-    {
-      name: 'Dr. Priya Sharma',
-      degrees: 'MBBS, MD (Medicine)',
-      specialization: 'General Physician',
-      experience: '12+ yrs experience',
-      rating: 4.9,
-      reviews: 840,
-      fee: 499,
-      availability: 'Available Today',
-      hospital: 'Ex-AIIMS New Delhi',
-      avatarColor: 'from-teal-500 to-emerald-600',
-    },
-    {
-      name: 'Dr. Rajesh Verma',
-      degrees: 'MBBS, DM (Cardiology)',
-      specialization: 'Senior Cardiologist',
-      experience: '15+ yrs experience',
-      rating: 5.0,
-      reviews: 1120,
-      fee: 899,
-      availability: 'Next: 10:30 AM',
-      hospital: 'Fortis Escorts Heart Inst.',
-      avatarColor: 'from-sky-500 to-blue-600',
-    },
-    {
-      name: 'Dr. Ananya Iyer',
-      degrees: 'MBBS, MD (Dermatology)',
-      specialization: 'Consultant Dermatologist',
-      experience: '9+ yrs experience',
-      rating: 4.8,
-      reviews: 620,
-      fee: 699,
-      availability: 'Available Today',
-      hospital: 'Apollo Hospitals',
-      avatarColor: 'from-indigo-500 to-purple-600',
-    },
-    {
-      name: 'Dr. Rohan Kulkarni',
-      degrees: 'MBBS, DCH (Pediatrics)',
-      specialization: 'Specialist Pediatrician',
-      experience: '11+ yrs experience',
-      rating: 4.9,
-      reviews: 750,
-      fee: 549,
-      availability: 'Next: 02:00 PM',
-      hospital: 'Manipal Children’s Clinic',
-      avatarColor: 'from-emerald-500 to-teal-700',
-    },
-  ];
+  const featuredDoctors = FEATURED_DOCTORS;
 
   const trustMetrics = [
     { value: '10,000+', label: 'Consultations Completed', sub: 'Across 28 Indian States' },
@@ -212,7 +164,7 @@ export default function LandingPage() {
               return (
                 <Link
                   key={item.name}
-                  href={`/register?role=patient`}
+                  href={`/patient/book?specialty=${encodeURIComponent(item.name)}`}
                   className="group p-4 rounded-xl border border-slate-200 bg-slate-50/60 hover:bg-gradient-to-b hover:from-white hover:to-teal-50/40 hover:border-teal-400 hover:shadow-md transition duration-200 flex flex-col items-center text-center"
                 >
                   <div className="w-12 h-12 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-teal-600 group-hover:bg-gradient-to-tr group-hover:from-sky-600 group-hover:to-teal-600 group-hover:text-white group-hover:scale-110 transition shadow-xs mb-3">
@@ -301,7 +253,7 @@ export default function LandingPage() {
                     </div>
 
                     <Link
-                      href="/register?role=patient"
+                      href={`/patient/book?doctorId=${doc.id}`}
                       className="w-full inline-flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-slate-900 hover:bg-teal-600 text-white text-xs font-semibold transition duration-150 shadow-xs"
                     >
                       Book Appointment

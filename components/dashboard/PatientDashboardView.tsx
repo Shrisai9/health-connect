@@ -286,7 +286,8 @@ export default function PatientDashboardView({ appointments, user }: PatientDash
         ) : (
           filteredAppointments.map((apt: any) => {
             const date = new Date(apt.start_time);
-            const docName = apt.doctor?.profiles?.full_name || 'Medical Specialist';
+            const rawDocName = apt.doctor?.profiles?.full_name || 'Medical Specialist';
+            const cleanDocName = rawDocName.startsWith('Dr.') ? rawDocName : `Dr. ${rawDocName}`;
             const specialization = apt.doctor?.specialization || 'Consultant Physician';
             const hasPrescription = apt.prescriptions && apt.prescriptions.length > 0;
             const rx = hasPrescription ? apt.prescriptions[0] : null;
@@ -299,12 +300,12 @@ export default function PatientDashboardView({ appointments, user }: PatientDash
                 {/* Left: Doctor Details & Time */}
                 <div className="flex items-start gap-4">
                   <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-teal-500 to-sky-600 text-white font-extrabold flex items-center justify-center flex-shrink-0 shadow-xs text-base">
-                    {docName.split(' ').map((n: string, i: number) => i <= 1 ? n[0] : '').join('') || 'DR'}
+                    {cleanDocName.replace('Dr.', '').trim().split(' ').map((n: string, i: number) => i <= 1 ? n[0] : '').join('') || 'DR'}
                   </div>
 
                   <div className="space-y-1">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="font-extrabold text-slate-900 text-base">Dr. {docName}</h3>
+                      <h3 className="font-extrabold text-slate-900 text-base">{cleanDocName}</h3>
                       {getStatusBadge(apt.status)}
                     </div>
 

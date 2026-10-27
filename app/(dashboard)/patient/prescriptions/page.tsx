@@ -1,99 +1,105 @@
-﻿import { createClient } from '@/lib/supabase/server';
+import { createClient } from '@/lib/supabase/server';
 import { decryptData } from '@/lib/encryption';
 import { redirect } from 'next/navigation';
-import { FileText, Calendar, User } from 'lucide-react';
+import PatientPrescriptionsView, { EnrichedPrescription } from '@/components/dashboard/PatientPrescriptionsView';
+import { parseMedicineInput } from '@/components/DigitalPrescriptionSlip';
 
-export default async function PatientPrescriptions() {
+export default async function PatientPrescriptionsPage() {
   const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   if (!user) redirect('/login');
 
-  // Fetch prescriptions
-  const { data: prescriptions } = await supabase
+  // Fetch patient profile
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('full_name, email, role')
+    .eq('id', user.id)
+    .single();
+
+  const userName = profile?.full_name || user.email?.split('@')[0] || 'Patient';
+  const userEmail = user.email || '';
+
+  // Fetch prescriptions with disambiguated doctor and appointment relations
+  const { data: rawPrescriptions, error } = await supabase
     .from('prescriptions')
     .select(`
       id,
       created_at,
+      medicines,
+      notes,
       encrypted_data,
       iv,
-      doctors:doctor_id (
-        profiles:id (full_name)
+      appointment_id,
+      appointment:appointment_id (
+        id,
+        start_time,
+        status
+      ),
+      doctor:doctor_id (
+        id,
+        specialization,
+        profiles!doctors_id_fkey (
+          full_name
+        )
       )
     `)
     .eq('patient_id', user.id)
     .order('created_at', { ascending: false });
 
+  if (error) {
+    console.error('Error fetching prescriptions:', error);
+  }
+
+  // Transform and enrich database records
+  const enrichedPrescriptions: EnrichedPrescription[] = (rawPrescriptions || []).map((script: any) => {
+    let diagnosis = 'General Medical Consultation';
+    let medicinesList = parseMedicineInput(script.medicines || '');
+    let notes = script.notes || '';
+
+    // If encrypted_data is present and formatted as "DATA:TAG", attempt decryption
+    if (script.encrypted_data && script.encrypted_data !== 'N/A' && script.iv && script.encrypted_data.includes(':')) {
+      try {
+        const [data, authTag] = script.encrypted_data.split(':');
+        if (data && authTag) {
+          const jsonString = decryptData(data, script.iv, authTag);
+          const decrypted = JSON.parse(jsonString);
+          if (decrypted.diagnosis) diagnosis = decrypted.diagnosis;
+          if (decrypted.notes) notes = decrypted.notes;
+          if (decrypted.medicines) {
+            medicinesList = parseMedicineInput(decrypted.medicines);
+          }
+        }
+      } catch (e) {
+        console.error('Prescription decryption error:', e);
+      }
+    }
+
+    const doctorProfile = script.doctor?.profiles;
+    const doctorName = doctorProfile?.full_name ? `Dr. ${doctorProfile.full_name}` : 'Dr. Medical Specialist';
+    const doctorSpecialization = script.doctor?.specialization || 'Consultant Physician';
+    const createdAt = script.appointment?.start_time || script.created_at;
+
+    return {
+      id: script.id,
+      created_at: createdAt,
+      doctor_name: doctorName,
+      doctor_specialization: doctorSpecialization,
+      diagnosis,
+      medicines: medicinesList,
+      notes,
+      appointment_id: script.appointment_id,
+    };
+  });
+
   return (
-    <div className="p-8 space-y-8 bg-gray-50 min-h-screen">
-      <header>
-        <h1 className="text-3xl font-bold text-gray-900">My Medical Records</h1>
-        <p className="text-gray-500">Securely decrypted history of your prescriptions.</p>
-      </header>
-
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {prescriptions && prescriptions.length > 0 ? (
-          prescriptions.map((script: any) => {
-            // Decrypt Data
-            let decrypted = { diagnosis: "Error", medicines: "", notes: "" };
-            try {
-              // Split the stored format "DATA:TAG"
-              const [data, authTag] = script.encrypted_data.split(':');
-              if (data && authTag) {
-                const jsonString = decryptData(data, script.iv, authTag);
-                decrypted = JSON.parse(jsonString);
-              }
-            } catch (e) {
-              console.error("Decryption failed", e);
-              decrypted.diagnosis = "Decryption Failed (Invalid Key)";
-            }
-
-            return (
-              <div key={script.id} className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 flex flex-col">
-                <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-100">
-                  <div className="flex items-center gap-2 text-gray-900 font-medium">
-                    <User size={18} className="text-blue-600" />
-                    Dr. {script.doctors.profiles.full_name}
-                  </div>
-                  <div className="flex items-center gap-1 text-xs text-gray-500">
-                    <Calendar size={12} />
-                    {new Date(script.created_at).toLocaleDateString()}
-                  </div>
-                </div>
-
-                <div className="space-y-4 flex-1">
-                  <div>
-                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Diagnosis</p>
-                    <p className="text-lg font-semibold text-gray-800">{decrypted.diagnosis}</p>
-                  </div>
-                  
-                  <div>
-                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Medicines</p>
-                    <p className="text-sm text-gray-600 whitespace-pre-wrap bg-gray-50 p-3 rounded-md mt-1">
-                      {decrypted.medicines}
-                    </p>
-                  </div>
-
-                  {decrypted.notes && (
-                    <div>
-                      <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Notes</p>
-                      <p className="text-sm text-gray-500 italic">{decrypted.notes}</p>
-                    </div>
-                  )}
-                </div>
-                
-                <div className="mt-6 pt-4 border-t border-gray-100 flex items-center gap-2 text-green-600 text-xs font-medium">
-                  <FileText size={14} />
-                  End-to-End Encrypted
-                </div>
-              </div>
-            );
-          })
-        ) : (
-          <div className="col-span-full text-center py-12 text-gray-500 bg-white rounded-xl border border-dashed">
-            No prescriptions found.
-          </div>
-        )}
-      </div>
-    </div>
+    <PatientPrescriptionsView
+      prescriptions={enrichedPrescriptions}
+      userName={userName}
+      userEmail={userEmail}
+      userId={user.id}
+    />
   );
 }
