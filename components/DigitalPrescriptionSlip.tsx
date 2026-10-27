@@ -12,6 +12,7 @@ import {
   FileText,
   Clock
 } from 'lucide-react';
+import { formatAppointmentDate, formatAppointmentTime } from '@/lib/schedule';
 
 export interface MedicineRow {
   name: string;
@@ -91,16 +92,9 @@ export default function DigitalPrescriptionSlip({
 }: PrescriptionSlipProps) {
   const medicineList = parseMedicineInput(medicines);
   const formattedDate = dateStr
-    ? new Date(dateStr).toLocaleDateString('en-IN', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-      })
-    : new Date().toLocaleDateString('en-IN', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-      });
+    ? formatAppointmentDate(dateStr)
+    : formatAppointmentDate(new Date().toISOString());
+  const formattedTime = dateStr ? formatAppointmentTime(dateStr) : '';
 
   const handlePrint = () => {
     window.print();
@@ -171,6 +165,7 @@ export default function DigitalPrescriptionSlip({
               <p className="font-bold text-slate-800 text-sm">E-Prescription Record</p>
               <p>Rx ID: <span className="font-mono text-slate-900 font-semibold">{prescriptionId?.slice(0, 8) || appointmentId?.slice(0, 8) || 'RX-78901'}</span></p>
               <p>Date: <span className="font-semibold text-slate-900">{formattedDate}</span></p>
+              {formattedTime && <p>Time: <span className="font-semibold text-slate-900">{formattedTime}</span></p>}
               <p className="text-[11px] text-emerald-700 font-semibold">Mode: Encrypted Video Consult</p>
             </div>
           </div>

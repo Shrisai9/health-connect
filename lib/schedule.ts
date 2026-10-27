@@ -46,6 +46,31 @@ export function formatTimeSlot(timeStr: string): string {
   return `${String(hour).padStart(2, '0')}:${minStr} ${ampm}`;
 }
 
+export function formatAppointmentDate(isoString: string): string {
+  const date = new Date(isoString);
+  if (isNaN(date.getTime())) return 'Invalid Date';
+  return date.toLocaleDateString('en-IN', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+}
+
+export function formatAppointmentTime(isoString: string): string {
+  const date = new Date(isoString);
+  if (isNaN(date.getTime())) return '--:--';
+  return date.toLocaleTimeString('en-IN', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true,
+  });
+}
+
+export function formatAppointmentDateTime(isoString: string): string {
+  return `${formatAppointmentDate(isoString)} • ${formatAppointmentTime(isoString)}`;
+}
+
 export interface ValidationResult {
   valid: boolean;
   error?: string;

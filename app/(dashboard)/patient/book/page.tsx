@@ -192,10 +192,12 @@ export default function BookingPage() {
 
     setSubmitting(true);
     try {
+      const clientIso = new Date(`${date}T${time}:00`).toISOString();
       const result = await bookAppointmentAction({
         doctorId: selectedDoctor,
         date,
         time,
+        startTimeIso: clientIso,
       });
 
       if (!result.success) {

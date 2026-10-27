@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { Calendar, Clock, User, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
 import DoctorActions from '@/components/DoctorActions';
-import { CLINIC_CONFIG } from '@/lib/schedule';
+import { CLINIC_CONFIG, formatAppointmentDate, formatAppointmentTime } from '@/lib/schedule';
 
 export default async function DoctorDashboard() {
   const supabase = createClient();
@@ -122,9 +122,13 @@ export default async function DoctorDashboard() {
                         {apt.patient?.full_name || 'Unknown Patient'}
                       </h3>
                       <div className="flex items-center gap-4 text-sm text-gray-500 mt-1 flex-wrap">
-                        <span className="flex items-center gap-1.5">
-                          <Clock size={14} />
-                          {date.toLocaleDateString()} at {date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        <span className="flex items-center gap-1.5 font-medium text-slate-700">
+                          <Calendar size={14} className="text-teal-600" />
+                          {formatAppointmentDate(apt.start_time)}
+                        </span>
+                        <span className="flex items-center gap-1.5 font-medium text-slate-700">
+                          <Clock size={14} className="text-teal-600" />
+                          {formatAppointmentTime(apt.start_time)}
                         </span>
                         <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold capitalize border ${getStatusBadge(apt.status)}`}>
                           {apt.status}

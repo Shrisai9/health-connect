@@ -14,6 +14,7 @@ export async function bookAppointmentAction(formData: {
   doctorId: string;
   date: string;
   time: string;
+  startTimeIso?: string;
 }): Promise<BookingResponse> {
   const { doctorId, date, time } = formData;
 
@@ -34,7 +35,8 @@ export async function bookAppointmentAction(formData: {
     return { success: false, message: 'You must be signed in to book an appointment.' };
   }
 
-  const startTimeIso = new Date(`${date}T${time}`).toISOString();
+  // Use client-provided exact ISO to prevent server timezone skew, or compute fallback
+  const startTimeIso = formData.startTimeIso || new Date(`${date}T${time}`).toISOString();
 
   // 2. Check for Duplicate Appointments in Database
   // Fetch any active appointment at this time for this doctor OR this patient
@@ -127,4 +129,11 @@ export async function cancelAppointmentAction(appointmentId: string): Promise<{ 
   revalidatePath('/admin/appointments');
 
   return { success: true, message: 'Appointment cancelled successfully' };
+}
+
+
+
+export async function updateUserRoleAction(userId: string, newRole: 'patient' | 'doctor' | 'admin') {
+  const { updateUserRoleAction: action } = await import('./users');
+  return action(userId, newRole);
 }

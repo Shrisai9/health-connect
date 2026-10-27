@@ -40,6 +40,7 @@ export default function PrescriptionModal({
   const [patientInfo, setPatientInfo] = useState<{ name: string; email?: string; id?: string }>({
     name: 'Patient',
   });
+  const [appointmentDateStr, setAppointmentDateStr] = useState<string | undefined>(undefined);
 
   const supabase = createClient();
 
@@ -50,6 +51,7 @@ export default function PrescriptionModal({
           .from('appointments')
           .select(`
             id,
+            start_time,
             patient_id,
             doctor_id,
             doctor:doctor_id (
@@ -72,6 +74,9 @@ export default function PrescriptionModal({
           .maybeSingle();
 
         if (apt) {
+          if (apt.start_time) {
+            setAppointmentDateStr(apt.start_time);
+          }
           if (apt.doctor) {
             setDoctorInfo({
               name: (apt.doctor as any)?.profiles?.full_name || 'Consultant Physician',
@@ -223,6 +228,7 @@ export default function PrescriptionModal({
         medicines={medicinesList.filter((m) => m.name.trim().length > 0)}
         notes={notes}
         diagnosis={diagnosis}
+        dateStr={appointmentDateStr}
         onClose={() => setPreviewMode(false)}
         showPrintButton={true}
       />
