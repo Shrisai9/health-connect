@@ -2,6 +2,8 @@ import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import PatientDashboardView from '@/components/dashboard/PatientDashboardView';
 
+export const dynamic = 'force-dynamic';
+
 export default async function PatientDashboard() {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();

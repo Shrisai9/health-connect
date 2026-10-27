@@ -27,7 +27,7 @@ import { FEATURED_DOCTORS } from '@/lib/doctors';
 function BookingPageContent() {
   const [doctors, setDoctors] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedDoctor, setSelectedDoctor] = useState<string | null>(null);
+  const [selectedDoctorKey, setSelectedDoctorKey] = useState<string | null>(null);
   const [selectedSpecialty, setSelectedSpecialty] = useState<string>('All');
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
@@ -86,8 +86,8 @@ function BookingPageContent() {
 
   useEffect(() => {
     const fetchDoctors = async () => {
-      // Ingest featured home page doctors with exact database UUID bindings
-      const baseList: any[] = FEATURED_DOCTORS.map((doc) => ({
+      // Ingest both previous database doctors and featured specialists with distinct unique keys
+      const baseList: any[] = FEATURED_DOCTORS.map((doc, idx) => ({
         id: doc.id,
         specialization: doc.specialization,
         hourly_rate: doc.fee,
@@ -97,6 +97,8 @@ function BookingPageContent() {
         rating: doc.rating,
         reviews: doc.reviews,
         avatarColor: doc.avatarColor,
+        category: doc.category,
+        uniqueKey: `${doc.id}-${idx}`,
         profiles: { full_name: doc.name, role: 'doctor' },
       }));
 
@@ -114,7 +116,11 @@ function BookingPageContent() {
 
         if (!error && data && data.length > 0) {
           for (const dbDoc of data) {
-            const exists = baseList.some((d) => d.id === dbDoc.id);
+            const dbProfiles = dbDoc.profiles as any;
+            const dbName = (Array.isArray(dbProfiles) ? dbProfiles[0]?.full_name : dbProfiles?.full_name) || '';
+            const exists = baseList.some(
+              (d) => d.id === dbDoc.id && d.profiles?.full_name?.toLowerCase().includes(dbName.toLowerCase())
+            );
             if (!exists) {
               baseList.push({
                 ...dbDoc,
@@ -124,6 +130,9 @@ function BookingPageContent() {
                 rating: 4.9,
                 reviews: 140,
                 avatarColor: 'from-slate-600 to-teal-700',
+                category: 'previous',
+                uniqueKey: dbDoc.id,
+                profiles: { full_name: dbName, role: 'doctor' },
               });
             }
           }
@@ -139,16 +148,17 @@ function BookingPageContent() {
         const matched = baseList.find(
           (d) =>
             d.id === paramDoctorId ||
+            d.uniqueKey === paramDoctorId ||
             d.profiles?.full_name?.toLowerCase().includes(paramDoctorId.toLowerCase())
         );
         if (matched) {
-          setSelectedDoctor(matched.id);
+          setSelectedDoctorKey(matched.uniqueKey);
           setSelectedSpecialty(matched.specialization || 'All');
         } else {
-          setSelectedDoctor(baseList[0].id);
+          setSelectedDoctorKey(baseList[0]?.uniqueKey || baseList[0]?.id);
         }
       } else {
-        setSelectedDoctor(baseList[0].id);
+        setSelectedDoctorKey(baseList[0]?.uniqueKey || baseList[0]?.id);
       }
 
       if (paramSpecialty) {
@@ -166,6 +176,18 @@ function BookingPageContent() {
       setDate(firstAvailable.dateStr);
     }
   }, [dayList, paramDoctorId, paramSpecialty]);
+
+  // Derive selected doctor object and active UUID
+  const selectedDoctorObj = useMemo(() => {
+    return (
+      doctors.find((d) => d.uniqueKey === selectedDoctorKey) ||
+      doctors.find((d) => d.id === selectedDoctorKey) ||
+      doctors[0] ||
+      null
+    );
+  }, [doctors, selectedDoctorKey]);
+
+  const selectedDoctor = selectedDoctorObj?.id || null;
 
   // Filter doctors by specialty
   const specialtiesList = useMemo(() => {
@@ -301,8 +323,6 @@ function BookingPageContent() {
     );
   }
 
-  const selectedDoctorObj = doctors.find((d) => d.id === selectedDoctor);
-
   return (
     <div className="p-4 md:p-8 max-w-6xl mx-auto min-h-screen pb-24 md:pb-12 text-slate-800">
       {/* Header */}
@@ -353,8 +373,8 @@ function BookingPageContent() {
                       spec === 'All'
                         ? doctors
                         : doctors.filter((d) => d.specialization?.toLowerCase().includes(spec.toLowerCase()));
-                    if (matching.length > 0 && !matching.some((m) => m.id === selectedDoctor)) {
-                      setSelectedDoctor(matching[0].id);
+                    if (matching.length > 0 && !matching.some((m) => m.uniqueKey === selectedDoctorKey || m.id === selectedDoctor)) {
+                      setSelectedDoctorKey(matching[0].uniqueKey || matching[0].id);
                       setTime('');
                     }
                   }}
@@ -372,16 +392,16 @@ function BookingPageContent() {
 
           {/* Doctor List */}
           <div className="space-y-3">
-            {filteredDoctors.map((doc) => {
-              const isSelected = selectedDoctor === doc.id;
+            {filteredDoctors.map((doc, idx) => {
+              const isSelected = selectedDoctorKey === doc.uniqueKey || (!selectedDoctorKey && idx === 0);
               const fee = doc.hourly_rate ? Number(doc.hourly_rate) : 499;
               const avatarColor = doc.avatarColor || 'from-teal-600 to-sky-600';
 
               return (
                 <div
-                  key={doc.id}
+                  key={doc.uniqueKey || `${doc.id}-${idx}`}
                   onClick={() => {
-                    setSelectedDoctor(doc.id);
+                    setSelectedDoctorKey(doc.uniqueKey || doc.id);
                     setTime('');
                     setValidationError(null);
                   }}
@@ -409,6 +429,15 @@ function BookingPageContent() {
                             {doc.profiles?.full_name || 'Dr. Specialist'}
                           </p>
                           <CheckCircle2 size={15} className="text-teal-600 flex-shrink-0" />
+                          {doc.category === 'previous' ? (
+                            <span className="text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200/80 font-semibold px-2 py-0.5 rounded-full">
+                              Previous Doctor
+                            </span>
+                          ) : (
+                            <span className="text-[10px] bg-sky-50 text-sky-700 border border-sky-200/80 font-semibold px-2 py-0.5 rounded-full">
+                              Featured Specialist
+                            </span>
+                          )}
                           {isSelected && (
                             <span className="text-[10px] bg-teal-600 text-white font-semibold px-2 py-0.5 rounded-full">
                               Selected
